@@ -58,6 +58,12 @@ func GetUser(id string) structures.User {
 	return user
 }
 
+func CheckUsername(id string, username string) structures.User {
+	user := structures.User{}
+	connection.Where("username = ?", username).Where("id <> ?", id).First(&user)
+	return user
+}
+
 func GetUserByUsername(username string) structures.User {
 	user := structures.User{}
 	connection.Where("username = ?", username).First(&user)
@@ -73,6 +79,12 @@ func GetUserScores(user_id uuid.UUID) []structures.Score {
 
 func CreateUser(user structures.User) structures.User {
 	connection.Create(&user)
+	return user
+}
+
+func UpdateUser(user structures.User) structures.User {
+	connection.Omit("Scores", "created_at").Save(&user)
+	user.Scores = GetUserScores(user.Id)
 	return user
 }
 

@@ -33,6 +33,7 @@ func StartServer() {
 		r.Post("/", GetUser)
 		r.Get("/best-scores", GetBestScores)
 		r.Post("/{id}/score", NewScore)
+		r.Post("/update", UpdateUser)
 	})
 
 	log.Fatal(http.ListenAndServe(":8000", r))
@@ -93,9 +94,32 @@ func GetBestScores(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	var response structures.ResponseUser
+	userRequest, err := GetUserRequest(r)
+
+	if err != nil {
+		response = ServerResponseError("No se han podido leer los datos")
+	} else {
+		checkUserName := connect.CheckUsername(userRequest.Id.String(), userRequest.Username)
+		if !checkUserName.IsValid() {
+			user := connect.GetUser(userRequest.Id.String())
+			if !user.IsValid() {
+				response = ServerResponseError("No se han podido leer los datos")
+			} else {
+				user = connect.UpdateUser(userRequest)
+				response = ServerResponseUserOk(user, "Login success!.")
+			}
+		} else {
+			response = ServerResponseError("El nombre de usuario no esta disponible.")
+		}
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
 func ServerResponseScoresOk(data []structures.BestScores, message string) structures.ResponseScores {
 	return ServerResponseScores(
-		http.StatusBadRequest,
+		http.StatusOK,
 		data,
 		message,
 	)
@@ -103,7 +127,7 @@ func ServerResponseScoresOk(data []structures.BestScores, message string) struct
 
 func ServerResponseUserOk(data structures.User, message string) structures.ResponseUser {
 	return ServerResponseUser(
-		http.StatusBadRequest,
+		http.StatusOK,
 		data,
 		message,
 	)
@@ -111,7 +135,7 @@ func ServerResponseUserOk(data structures.User, message string) structures.Respo
 
 func ServerResponseError(message string) structures.ResponseUser {
 	return ServerResponseUser(
-		http.StatusOK,
+		http.StatusUnprocessableEntity,
 		structures.User{},
 		message,
 	)

@@ -10,7 +10,7 @@ import (
 
 type User struct {
 	Id        uuid.UUID
-	Username  string `json:"username"`
+	Username  string
 	Scores    []Score
 	CreatedAt time.Time
 }
